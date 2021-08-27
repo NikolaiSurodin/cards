@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="container">
     <div class="wrapper-game">
       <div class="card"
            :class="{'card-flip':card.flipped}"
@@ -85,8 +85,15 @@ export default {
 <style scoped>
 .wrapper-game {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: minmax(50px, auto);
+  /*grid-template-columns: repeat(4, 1fr);*/
+  /*grid-auto-rows: minmax(50px, auto);*/
+  justify-items: center;
+  grid-template-columns: repeat(4, 200px);
+  grid-gap: 10px;
+  grid-auto-rows: 200px;
+  grid-template-areas:
+    ". a a ."
+    ". a a .";
 }
 
 .card {
@@ -111,5 +118,8 @@ export default {
       180deg
   );
 }
-
+.container {
+  display: flex;
+  justify-content: center;
+}
 </style>
