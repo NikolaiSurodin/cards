@@ -16,6 +16,7 @@ export default {
   data() {
     return {}
   },
+  props: [ 'value' ],
   methods: {
     clickOnCard() {
       this.$emit( 'clickOnCard' )
@@ -30,12 +31,14 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(61% 73%, #d0d0d0,#77e68f);
+  background: radial-gradient(61% 73%, #d0d0d0, #77e68f);
 }
+
 .wrapper p {
-  color: aliceblue;
+  color: #000000;
   font-size: 70px;
 }
+
 .wrapper:hover {
   cursor: pointer;
 }

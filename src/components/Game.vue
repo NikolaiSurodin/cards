@@ -1,14 +1,27 @@
 <template>
   <div class="container">
-    <p>Счетчик: {{ count }}
-      <button class="btn" @click="rematch">Начать заново</button>
+    <winner-page v-if="winner"
+                 :time="time"
+                 :count="count"
+                 @close="closeWinnerPopup"
+                 @restart="repeat"
+    />
+
+    <p>
+      Счетчик шагов: {{ count }}
+
+      Время:{{ time | secondsInMinutes }}
+
+      <button class="btn" @click="startGame">Начать игру</button>
     </p>
     <div class="wrapper-game">
 
       <div class="card"
            :class="{'card-flip':card.flipped}"
            v-for="(card, idx) in cards" :key="idx">
+
         <card-item class="card"
+                   :value="card.value"
                    @clickOnCard="clickOnCard(card)">
 
           <template v-slot:front>
@@ -34,19 +47,31 @@
 
 <script>
 import CardItem from "@/components/CardItem"
+import moment from "moment"
+import WinnerPage from "@/components/WinnerPage"
 
 export default {
   name: "Game",
-  components: { CardItem },
+  components: { WinnerPage, CardItem },
   data() {
     return {
       cards: [],
       selectedCards: [],
+      foundCardList: [],
       count: 0,
+      startedTimer: false,
+      time: 0,
+      timer: null,
+      winner: false
     }
   },
   created() {
     this.createCardList()
+  },
+  mounted() {
+    if ( this.startedTimer ) {
+      this.startTimer()
+    }
   },
   methods: {
     createCardList() {
@@ -69,7 +94,7 @@ export default {
       }
     },
     clickOnCard(card) {
-      if ( !card.found && !card.flipped ) {
+      if ( !card.found && !card.flipped && this.started ) {
         if ( this.selectedCards.length < 2 ) {
           card.flipped = true
           this.selectedCards.push( card )
@@ -80,16 +105,66 @@ export default {
               if ( this.selectedCards[0].value === card.value ) {
                 this.selectedCards[0].found = true
                 card.found = true
+                this.foundCardList.push( this.selectedCards[0] )
+                this.foundCardList.push( card )
               }
               this.selectedCards = []
+              if ( this.cards.length === this.foundCardList.length ) {
+                this.winnerInfo()
+              }
             }, 1000 )
           }
         }
       }
     },
-    rematch() {
-      this.count = 0
-      this.createCardList()
+    winnerInfo() {
+      this.stopTimer()
+      this.winner = true
+    },
+    stopTimer() {
+      clearInterval( this.timer )
+    },
+    startGame() {
+      this.$swal.fire(
+          'Внимание! Готовы играть?',
+          'Запонимайте цифры и найдите их пару',
+          'question'
+      )
+          .then( () => {
+            this.time = 0
+            this.cards.forEach( el => el.flipped = true )
+            setTimeout( () =>
+                this.cards.forEach( el => {
+                  el.flipped = false
+                  this.started = true
+                  this.startedTimer = true
+                } ), 5000 )
+          } )
+    },
+    startTimer() {
+      this.timer = setInterval( () => {
+        this.time++
+      }, 1000 )
+    },
+    repeat() {
+      this.winner = !this.winner
+      this.startGame()
+    },
+    closeWinnerPopup() {
+      this.winner = !this.winner
+    }
+  },
+  filters: {
+    secondsInMinutes(seconds) {
+      return moment()
+          .startOf( "day" )
+          .seconds( seconds )
+          .format( "HH:mm:ss" );
+    }
+  },
+  watch: {
+    startedTimer() {
+      this.startTimer()
     }
   }
 }
@@ -108,7 +183,7 @@ export default {
 .card {
   padding: 9px 0;
   width: 160px;
-  transition: transform 1s;
+  transition: transform 0.5s;
   transform-style: preserve-3d;
   cursor: pointer;
   position: relative;
@@ -120,6 +195,7 @@ export default {
 
 .card-flip {
   transform: rotateY(180deg);
+  transition: 0.5s;
 }
 
 .back {
@@ -150,4 +226,5 @@ export default {
 .btn:hover {
   background-color: #77e68f;
 }
+
 </style>
