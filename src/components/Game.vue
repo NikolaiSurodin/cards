@@ -41,8 +41,8 @@ export default {
     }
   },
   created() {
-    let i = 0
-    let list = [ ...Array( 8 ) ].map( () => (i += 1) )
+    let count = 0
+    let list = [ ...Array( 8 ) ].map( () => (count += 1) )
     this.cards = [ ...list, ...list ].map( value => {
       return {
         value: value,
@@ -85,15 +85,10 @@ export default {
 <style scoped>
 .wrapper-game {
   display: grid;
-  /*grid-template-columns: repeat(4, 1fr);*/
-  /*grid-auto-rows: minmax(50px, auto);*/
   justify-items: center;
   grid-template-columns: repeat(4, 200px);
   grid-gap: 10px;
   grid-auto-rows: 200px;
-  grid-template-areas:
-    ". a a ."
-    ". a a .";
 }
 
 .card {
@@ -114,10 +109,9 @@ export default {
 }
 
 .back {
-  transform: rotateY(
-      180deg
-  );
+  transform: rotateY(180deg);
 }
+
 .container {
   display: flex;
   justify-content: center;
