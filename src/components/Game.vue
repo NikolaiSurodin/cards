@@ -1,6 +1,10 @@
 <template>
   <div class="container">
+    <p>Счетчик: {{ count }}
+      <button class="btn" @click="rematch">Начать заново</button>
+    </p>
     <div class="wrapper-game">
+
       <div class="card"
            :class="{'card-flip':card.flipped}"
            v-for="(card, idx) in cards" :key="idx">
@@ -38,22 +42,26 @@ export default {
     return {
       cards: [],
       selectedCards: [],
+      count: 0,
     }
   },
   created() {
-    let count = 0
-    let list = [ ...Array( 8 ) ].map( () => (count += 1) )
-    this.cards = [ ...list, ...list ].map( value => {
-      return {
-        value: value,
-        flipped: false,
-        found: false,
-        front: '?'
-      }
-    } )
-    this.mixCardList( this.cards )
+    this.createCardList()
   },
   methods: {
+    createCardList() {
+      let count = 0
+      let list = [ ...Array( 8 ) ].map( () => (count += 1) )
+      this.cards = [ ...list, ...list ].map( value => {
+        return {
+          value: value,
+          flipped: false,
+          found: false,
+          front: '?'
+        }
+      } )
+      this.mixCardList( this.cards )
+    },
     mixCardList(cardList) {
       for (let i = cardList.length - 1; i > 0; i--) {
         let j = Math.floor( Math.random() * (i + 1) );
@@ -66,6 +74,7 @@ export default {
           card.flipped = true
           this.selectedCards.push( card )
           if ( this.selectedCards.length === 2 ) {
+            this.count++
             setTimeout( () => {
               this.selectedCards.forEach( el => el.flipped = false )
               if ( this.selectedCards[0].value === card.value ) {
@@ -77,6 +86,10 @@ export default {
           }
         }
       }
+    },
+    rematch() {
+      this.count = 0
+      this.createCardList()
     }
   }
 }
@@ -89,6 +102,7 @@ export default {
   grid-template-columns: repeat(4, 200px);
   grid-gap: 10px;
   grid-auto-rows: 200px;
+  justify-content: center;
 }
 
 .card {
@@ -115,5 +129,25 @@ export default {
 .container {
   display: flex;
   justify-content: center;
+  flex-direction: column;
+}
+
+.container p {
+  text-align: center;
+}
+
+.btn {
+  font-weight: 600;
+  font-size: 14px;
+  padding: .5rem 1rem;
+  margin: 0 6px;
+  border: 2px solid #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all .25s ease;
+}
+
+.btn:hover {
+  background-color: #77e68f;
 }
 </style>
