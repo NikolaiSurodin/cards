@@ -1,18 +1,16 @@
 <template>
   <div class="container">
-    <winner-page v-if="winner"
-                 :time="time"
-                 :count="count"
-                 @close="closeWinnerPopup"
-                 @restart="repeat"
-    />
-
     <p>
       Счетчик шагов: {{ count }}
 
-      Время:{{ time | secondsInMinutes }}
+      Время:{{ secondsInMinutes }}
 
-      <button class="btn" @click="startGame">Начать игру</button>
+      <button class="btn"
+              @click="startGame"
+              :disabled="this.winner"
+      >
+        Начать игру
+      </button>
     </p>
     <div class="wrapper-game">
 
@@ -48,11 +46,10 @@
 <script>
 import CardItem from "@/components/CardItem"
 import moment from "moment"
-import WinnerPage from "@/components/WinnerPage"
 
 export default {
   name: "Game",
-  components: { WinnerPage, CardItem },
+  components: { CardItem },
   data() {
     return {
       cards: [],
@@ -62,16 +59,12 @@ export default {
       startedTimer: false,
       time: 0,
       timer: null,
-      winner: false
+      winner: false,
+      disabledStart: false
     }
   },
   created() {
     this.createCardList()
-  },
-  mounted() {
-    if ( this.startedTimer ) {
-      this.startTimer()
-    }
   },
   methods: {
     createCardList() {
@@ -94,7 +87,7 @@ export default {
       }
     },
     clickOnCard(card) {
-      if ( !card.found && !card.flipped && this.started ) {
+      if ( !card.found && !card.flipped && this.disabledStart ) {
         if ( this.selectedCards.length < 2 ) {
           card.flipped = true
           this.selectedCards.push( card )
@@ -120,45 +113,99 @@ export default {
     winnerInfo() {
       this.stopTimer()
       this.winner = true
-    },
-    stopTimer() {
-      clearInterval( this.timer )
+      this.$swal.fire( {
+        title: 'Отлично! Игра завершена',
+        text: `Вы потратили времени ${ this.secondsInMinutes } и шагов ${ this.count }`,
+        icon: 'success',
+        showCancelButton: false,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#823d3d',
+        allowOutsideClick: false,
+        cancelButtonText: 'Звершить',
+      } )
     },
     startGame() {
-      this.$swal.fire(
-          'Внимание! Готовы играть?',
-          'Запонимайте цифры и найдите их пару',
-          'question'
-      )
-          .then( () => {
-            this.time = 0
-            this.cards.forEach( el => el.flipped = true )
-            setTimeout( () =>
-                this.cards.forEach( el => {
-                  el.flipped = false
-                  this.started = true
+      if ( !this.disabledStart ) {
+        this.$swal.fire( {
+          title: 'Начнем?',
+          text: "Запомните цифры и найдите пары",
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#823d3d',
+          allowOutsideClick: false,
+          cancelButtonText: 'В другой раз',
+          confirmButtonText: 'Начинаем!'
+        } )
+            .then( (result) => {
+              if ( result.isConfirmed ) {
+                this.disabledStart = true
+                this.time = 0
+                this.cards.forEach( el => el.flipped = true )
+                setTimeout( () => {
                   this.startedTimer = true
-                } ), 5000 )
-          } )
+                  this.cards.forEach( el => {
+                    el.flipped = false
+
+                  } )
+                }, 5000 )
+              }
+            } )
+      } else if ( this.disabledStart ) {
+        this.stopTimer()
+        this.$swal.fire( {
+          title: 'Начнем сначала? Результаты будут сброшены',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#823d3d',
+          allowOutsideClick: false,
+          cancelButtonText: 'Отмена',
+          confirmButtonText: `Начать сначала!`
+        } )
+            .then( (result) => {
+              if ( result.isConfirmed ) {
+                this.repeatGame()
+                this.cards.forEach( el => el.flipped = true )
+                setTimeout( () => {
+                  this.startTimer()
+                  this.cards.forEach( el => {
+                    el.flipped = false
+                  } )
+                }, 5000 )
+
+              } else if ( result.isDismissed ) {
+                this.startTimer()
+              }
+            } )
+      }
+    },
+    repeatGame() {
+      this.disabledStart = true
+      this.time = 0
+      this.timer = null
+      this.count = 0
+      this.foundCardList = []
+      this.selectedCards = []
+      this.createCardList()
     },
     startTimer() {
       this.timer = setInterval( () => {
         this.time++
       }, 1000 )
     },
-    repeat() {
-      this.winner = !this.winner
-      this.startGame()
+    stopTimer() {
+      clearInterval( this.timer )
     },
-    closeWinnerPopup() {
-      this.winner = !this.winner
-    }
   },
-  filters: {
-    secondsInMinutes(seconds) {
+  computed: {
+    isDisabledStart() {
+      return this.disabledStart
+    },
+    secondsInMinutes() {
       return moment()
           .startOf( "day" )
-          .seconds( seconds )
+          .seconds( this.time )
           .format( "HH:mm:ss" );
     }
   },
